@@ -1,10 +1,6 @@
-// disable console on windows
 #![windows_subsystem = "windows"]
-
 use native_dialog::*;
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
-use std::{env, path::PathBuf};
+use std::env;
 
 fn error(title: &str, text: &str) {
     eprintln!("---------{}---------\n---------{}---------", title, text);
@@ -17,7 +13,7 @@ fn error(title: &str, text: &str) {
 }
 
 fn main() {
-    let iw4x = PathBuf::from("iw4x.exe");
+    let iw4x = env::current_dir().unwrap().join("iw4x.exe");
 
     // make sure iw4x.exe exists
     if !iw4x.exists() {
@@ -28,16 +24,23 @@ fn main() {
     // first arg is the path of this executable
     let args_current: Vec<String> = env::args().skip(1).collect();
 
+    // if -stdout is set, we have to attach a console to display output
+    if args_current.contains(&"-stdout".to_owned()) {
+        unsafe {
+            if winapi::um::wincon::AttachConsole(winapi::um::wincon::ATTACH_PARENT_PROCESS) == 0 {
+                println!("Failed to attach console.");
+            } else {
+                println!("Console attached successfully.");
+            }
+        }
+    }
+
     // prepend args with -zonebuilder
     let args_zonebuilder = [vec!["-zonebuilder".to_string()], args_current].concat();
 
     // build command
     let mut cmd = std::process::Command::new(iw4x);
     cmd.args(args_zonebuilder.clone());
-
-    // add CREATE_NO_WINDOW flag on windows to prevent console flash from command
-    #[cfg(windows)]
-    cmd.creation_flags(0x08000000);
 
     // run iw4x.exe with args_zonebuilder
     let exit_status = match cmd.spawn() {
