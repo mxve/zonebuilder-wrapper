@@ -1,0 +1,88 @@
+on: [push, pull_request]
+
+name: lint
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-20.04
+          - target: i686-pc-windows-msvc
+            os: windows-latest
+    name: Check
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Run cargo check
+        uses: clechasseur/rs-cargo@v2
+        continue-on-error: true
+        with:
+          command: check
+
+  test:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-20.04
+          - target: i686-pc-windows-msvc
+            os: windows-latest
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Run cargo test
+        uses: clechasseur/rs-cargo@v2
+        continue-on-error: true
+        with:
+          command: test
+
+  lints:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-20.04
+          - target: i686-pc-windows-msvc
+            os: windows-latest
+    name: Lints
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Run cargo fmt
+        uses: clechasseur/rs-cargo@v2
+        continue-on-error: true
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: clechasseur/rs-cargo@v2
+        continue-on-error: true
+        with:
+          command: clippy
+          args: -- -D warnings
