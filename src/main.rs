@@ -28,9 +28,7 @@ fn main() {
     if args_current.contains(&"-stdout".to_owned()) {
         unsafe {
             if winapi::um::wincon::AttachConsole(winapi::um::wincon::ATTACH_PARENT_PROCESS) == 0 {
-                println!("Failed to attach console.");
-            } else {
-                println!("Console attached successfully.");
+                error("Failed to attach console", "-stdout is set but zonebuilder.exe failed to attach a console window.\nIf this issue persists please run iw4x.exe with the -zonebuilder flag directly.")
             }
         }
     }
